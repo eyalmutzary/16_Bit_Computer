@@ -155,6 +155,8 @@ def test_ALU():
      # OUT out[16], zr, ng;
 def Extended_ALU(x, y, instruction):
     bin_instruction = numTo16Bit(instruction)[-9:]
+    print(bin_instruction)
+    print(f"x = {x} y = {y} instruction = {instruction}")
     # And(a=instruction[8], b=instruction[7], out=isRegularOut); // check if needed a regular or extended use
     # ALU(x=x, y=y, zx=instruction[5], nx=instruction[4], zy=instruction[3], ny=instruction[2], f=instruction[1],
     #     no=instruction[0], out=regularOut, zr=regularZr, ng=regularNg);
@@ -171,7 +173,10 @@ def Extended_ALU(x, y, instruction):
     # ShiftRight( in = DataToShift, out = shiftedRight);
     shiftedRight = ShiftRight16(a=DataToShift)
     # Mux16(a=shiftedRight, b=shiftedLeft, sel=instruction[5], out=shiftedOut); // chooses shift right or left
-    shiftedOut = Mux16(a=shiftedRight, b=shiftedLeft, sel=int(bin_instruction[5]))
+    shift_direction = 0
+    if int(bin_instruction[3]) == 1:
+        shift_direction = -1
+    shiftedOut = Mux16(a=shiftedRight, b=shiftedLeft, sel=shift_direction)
     # Mux16(a=shiftedOut, b=regularOut, sel=isRegularOut, out=finalOut, out[0..7]=orA, out[8..15]=orB, out = out); // choose regualr ALU or extended ALU
     if isRegularOut == 1:
         isRegularOut = -1
@@ -197,5 +202,5 @@ def Extended_ALU(x, y, instruction):
     return out, zr, 0 if ng == 0 else 1
 
 
-# out, zr, ng = Extended_ALU(20, -100, 99)
+# out, zr, ng = Extended_ALU(20, -100, 10)
 # print(f'out: {out}, zero: {zr}, neg: {ng}')
