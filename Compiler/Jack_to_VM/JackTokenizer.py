@@ -158,7 +158,7 @@ class JackTokenizer:
                             # if token is keyword:
                             if curr_token in JackTokenizer.keyword_dict \
                                     and (len(self.tokens_list) == 0 or self.tokens_list[-1] != '.')\
-                                    and (len(self.tokens_list) > letter_index+1 or not line[letter_index+1].isnumeric()):  # specific case, if there is a variable or function that starts with keyword
+                                    and (len(self.tokens_list) > letter_index+1 or letter_index+1 or not line[letter_index+1].isnumeric()):  # specific case, if there is a variable or function that starts with keyword
                                 # print(str(len(self.tokens_list)) + " AND " + str(letter_index+1))
                                 if not (len(line) > letter_index and line[letter_index].isalpha()):
                                     self.tokens_list.append(curr_token) # adds and reset

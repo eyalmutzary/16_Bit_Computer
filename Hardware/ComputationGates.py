@@ -155,8 +155,6 @@ def test_ALU():
      # OUT out[16], zr, ng;
 def Extended_ALU(x, y, instruction):
     bin_instruction = numTo16Bit(instruction)[-9:]
-    print(bin_instruction)
-    print(f"x = {x} y = {y} instruction = {instruction}")
     # And(a=instruction[8], b=instruction[7], out=isRegularOut); // check if needed a regular or extended use
     # ALU(x=x, y=y, zx=instruction[5], nx=instruction[4], zy=instruction[3], ny=instruction[2], f=instruction[1],
     #     no=instruction[0], out=regularOut, zr=regularZr, ng=regularNg);

@@ -37,9 +37,12 @@ def compile_all_files_in_path(path: str) -> None:
         files_to_assemble = [path]
     for input_path in files_to_assemble:
         filename, extension = os.path.splitext(input_path)
+        print(filename, extension)
         if extension.lower() != ".jack":
             continue
         output_path = filename + ".vm"
         with open(input_path, 'r') as input_file, \
                 open(output_path, 'w') as output_file:
+            if filename == "C:\MyFolder\/University\/Nand2Tetris\/16BitComputer\OperationSystem\Output":
+                print("Compiling file: " + input_path)
             compile_file(input_file, output_file)

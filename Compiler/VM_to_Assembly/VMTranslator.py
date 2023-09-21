@@ -83,3 +83,18 @@ def translate_all_files_in_path(path: str) -> None:
             with open(input_path, 'r') as input_file:
                 translate_file(input_file, output_file, bootstrap)
             bootstrap = False
+        # for input_path in files_to_translate:
+        #     filename, extension = os.path.splitext(input_path)
+        #     if 'Sys.vm' not in input_path:
+        #         continue
+        #     with open(input_path, 'r') as input_file:
+        #         translate_file(input_file, output_file, bootstrap)
+        #     bootstrap = False
+        # for input_path in files_to_translate:
+        #     filename, extension = os.path.splitext(input_path)
+        #     if 'Sys.vm' in filename or extension.lower() != ".vm":
+        #         continue
+        #     with open(input_path, 'r') as input_file:
+        #         translate_file(input_file, output_file, bootstrap)
+        #     bootstrap = False
+

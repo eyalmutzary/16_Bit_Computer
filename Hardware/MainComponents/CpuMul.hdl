@@ -1,0 +1,89 @@
+// This file is part of nand2tetris, as taught in The Hebrew University, and
+// was written by Aviv Yaish. It is an extension to the specifications given
+// [here](https://www.nand2tetris.org) (Shimon Schocken and Noam Nisan, 2017),
+// as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
+// Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
+
+// This chip is an extension of the regular CPU that uses the extended ALU.
+// If instruction[15]==0 or (instruction[14]==1 and instruction[13]==1),
+// then CpuMul behaves exactly the same as the regular CPU.
+// If instruction[15]==1 and instruction[14]==0 the chip will behave as follows:
+// | Instruction           | 15 | 14 | 13 | a | c1 | c2 | c3 | c4 | c5 | c6 |
+// |-----------------------|:--:|:--:|:--:|:-:|:--:|:--:|:--:|:--:|:--:|:--:|
+// | Regular a-instruction |  0 |  * |  * | * |  * |  * |  * |  * |  * |  * |
+// | Regular c-instruction |  1 |  1 |  1 | * |  * |  * |  * |  * |  * |  * |
+// | dest=A<<;jump         |  1 |  0 |  1 | 0 |  1 |  0 |  0 |  0 |  0 |  0 |
+// | dest=D<<;jump         |  1 |  0 |  1 | 0 |  1 |  1 |  0 |  0 |  0 |  0 |
+// | dest=M<<;jump         |  1 |  0 |  1 | 1 |  1 |  0 |  0 |  0 |  0 |  0 |
+// | dest=A>>;jump         |  1 |  0 |  1 | 0 |  0 |  0 |  0 |  0 |  0 |  0 |
+// | dest=D>>;jump         |  1 |  0 |  1 | 0 |  0 |  1 |  0 |  0 |  0 |  0 |
+// | dest=M>>;jump         |  1 |  0 |  1 | 1 |  0 |  0 |  0 |  0 |  0 |  0 |
+
+CHIP CpuMul {
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset=1) or continue executing
+                         // the current program (reset=0).
+    OUT outM[16],        // M value output
+        writeM,          // Write into M?
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+    // Put you code here:
+    // I copy-pasted the regular CPU, and added a little changes in the ALU area.
+
+    // Calaculate what a regular CPU would does:
+    //CPU(inM=inM, instruction=instruction, reset=reset, outM=RegOutM, writeM=RegWriteM, addressM=RegAddressM, pc=RegPc);
+    //CPU(inM=inM, instruction=instruction, reset=reset, outM=outM, writeM=writeM, addressM=addressM, pc=pc);
+
+    // Calculate what an extended CPU would does:
+
+    Mux16(a=instruction, b=ALUoutput, sel=instruction[15], out=OutToARegister);
+
+    Not(in=instruction[15],out=ni);
+    Or(a=ni,b=instruction[5],out=loadA);
+    ARegister(in=OutToARegister, load=loadA, out=ARegOutput, out[0..14]=addressM);
+
+    And(a=instruction[15],b=instruction[12],out=AorM); // checks if it is a C function (and not @<=>A function)
+    Mux16(a=ARegOutput, b=inM, sel=AorM, out=MuxOutToALU);
+
+    // Calculates both ALU's, and choose later which one to use
+    ALU(x=DRegOutput, y=MuxOutToALU, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=RegALUoutput, out=RegOutM, zr=RegZr, ng=RegNg);
+    ExtendAlu(x=DRegOutput, y=MuxOutToALU, instruction[0..6]=instruction[6..12], instruction[7]=true, instruction[8]=false, out=ExALUoutput, out=ExOutM, zr=ExZr, ng=ExNg);
+
+    Xor(a=instruction[15], b=false, out=firstCondition); // Determine if should use regular ALU or extended ALU
+    Xor(a=instruction[14], b=true, out=secondCondition);
+    And(a=firstCondition, b=secondCondition, out=isExtended);
+    Mux16(a=RegALUoutput, b=ExALUoutput, sel=isExtended, out=ALUoutput);
+    Mux16(a=RegOutM, b=ExOutM, sel=isExtended, out=outM);
+    Mux(a=RegZr, b=ExZr, sel=isExtended, out=zr);
+    Mux(a=RegNg, b=ExNg, sel=isExtended, out=ng);
+
+    // Continue to the normal CPU process
+    And(a=instruction[15],b=instruction[4],out=loadD);
+    DRegister(in=ALUoutput, load=loadD, out=DRegOutput);
+
+    And(a=instruction[15],b=instruction[3],out=writeM);
+
+    // Now calculate g function, to check if there is a jump, reset or continue to next line
+    Not(in=ng, out=pos); // prefix for positive
+    Not(in=zr, out=nzr); // prefix for not-zero
+
+    And(a=instruction[15], b=instruction[0], out=jgt); // checks if greater than
+    And(a=pos, b=nzr, out=posnzr); // and not equal
+    And(a=jgt, b=posnzr, out=load1);
+
+    And(a=instruction[15],b=instruction[1],out=jeq); // checks if equal
+    And(a=jeq,b=zr,out=load2);
+
+    And(a=instruction[15],b=instruction[2],out=jlt); // checks lower than
+    And(a=jlt,b=ng,out=load3);
+
+    Or(a=load1,b=load2,out=ldt); // checks if one of the conditions is 1
+    Or(a=load3,b=ldt,out=pcLoad);
+
+    PC(in=ARegOutput, reset=reset, load=pcLoad, inc=true, out[0..14]=pc);
+
+}

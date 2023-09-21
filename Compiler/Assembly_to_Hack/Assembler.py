@@ -49,9 +49,7 @@ def first_pass(parser: Parser, symbol_table: SymbolTable, curr_symbol_index) -> 
     while parser.has_more_commands():
         if parser.command_type() == "L_COMMAND" \
                 and not symbol_table.contains(parser.symbol()):
-            # symbol_table.add_entry(parser.symbol(), curr_symbol_index[0])
             symbol_table.add_entry(parser.symbol(), row_counter)
-            # curr_symbol_index[0] += 1
         elif parser.command_type() != None:
             row_counter += 1
         parser.advance()
